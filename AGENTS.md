@@ -19,6 +19,7 @@ node_modules/    # bun-managed; not tracked in git
 Key files:
 - `agents/issue-flow.md` — Primary orchestrator agent for GitHub issue resolution
 - `agents/architect.md` — Read-only architecture analysis subagent
+- `agents/triage.md` — Hidden subagent for structured issue triage reports
 - `skills/resolve-issue/SKILL.md` — Full protocol for end-to-end issue resolution
 
 ---
@@ -134,13 +135,15 @@ The file is always named `SKILL.md` (uppercase).
 
 When using the `issue-flow` agent or `resolve-issue` skill, the following phases apply:
 
-| Phase | Action                                      | Pause point                                        |
-|-------|---------------------------------------------|----------------------------------------------------|
-| 0     | Fetch issue with `gh issue view`            | "Shall I proceed with analysis?"                   |
-| 1     | Invoke `architect` subagent for a plan      | "Does the plan look good?"                         |
-| 2     | Create branch + invoke `general` subagent   | "Shall I proceed to run tests?"                    |
-| 3     | Run `make lint` then `make test`            | "Shall I commit and open a PR?"                    |
-| 4     | `git add .`, `git commit`, `gh pr create`  | Show PR URL                                        |
+| Phase | Action                                                              | Pause point                                              |
+|-------|---------------------------------------------------------------------|----------------------------------------------------------|
+| -1    | Check for existing history file (resume detection)                  | "Resume from Phase N, or start over?"                    |
+| 0     | Fetch issue with `gh issue view`; assign `@me`                      | "Shall I proceed with triage?"                           |
+| 1     | Triage: classify type (label), analyse requirements, scope, impact  | "Does the scope and impact look correct?"                |
+| 2     | Invoke `architect` subagent for a plan                              | "Does the plan look good?"                               |
+| 3     | Create branch + invoke `general` subagent                           | "Shall I proceed to run tests?"                          |
+| 4     | Run `make lint` then `make test`                                    | "Shall I commit and open a PR?"                          |
+| 5     | `git add .`, `git commit`, `gh pr create`, post history comment     | Show PR URL                                              |
 
 **Never skip a phase without explicit user approval.**
 
