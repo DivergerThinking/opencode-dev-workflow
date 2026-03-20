@@ -17,9 +17,9 @@ node_modules/    # bun-managed; not tracked in git
 ```
 
 Key files:
-- `agents/issue-flow.md` — Primary orchestrator agent for GitHub issue resolution
-- `agents/architect.md` — Read-only architecture analysis subagent
-- `agents/triage.md` — Hidden subagent for structured issue triage reports (no tool access)
+- `agents/issue-flow.md` — Primary orchestrator agent for GitHub issue resolution (`github-copilot/claude-opus-4-6`)
+- `agents/architect.md` — Read-only architecture analysis subagent (`github-copilot/gpt-5.4`)
+- `agents/triage.md` — Hidden subagent for structured issue triage reports, no tool access (`github-copilot/claude-haiku-4-5`)
 - `skills/resolve-issue/SKILL.md` — Full protocol for end-to-end issue resolution
 
 ---
@@ -64,6 +64,7 @@ by a Markdown system prompt.
 ---
 description: <one-line description shown in agent picker>
 mode: primary | subagent
+model: github-copilot/<model-id>   # Explicit model assignment (required)
 temperature: <float 0.0–1.0>
 permission:
   edit: allow | deny
@@ -87,6 +88,16 @@ permission:
 |------------|-------------------------------------------------------------|
 | `primary`  | User-facing; drives the top-level conversation flow         |
 | `subagent` | Invoked by another agent; not directly accessible by users  |
+
+### Model assignments
+
+Each agent has an explicit `model` field in its front-matter. All models are sourced from GitHub Copilot.
+
+| Agent            | Model                                | Rationale                                                      |
+|------------------|--------------------------------------|----------------------------------------------------------------|
+| `issue-flow`     | `github-copilot/claude-opus-4-6`     | Orchestrator: sustained multi-phase reasoning, long context    |
+| `architect`      | `github-copilot/gpt-5.4`            | Deep architectural reasoning, complex cross-file analysis      |
+| `triage`         | `github-copilot/claude-haiku-4-5`   | Pure-reasoning, no tools; fast and cost-efficient is enough    |
 
 ---
 
@@ -201,7 +212,7 @@ Closes #<number>
 ## Adding a New Agent
 
 1. Create `agents/<name>.md`.
-2. Add YAML front-matter with `description`, `mode`, `temperature`, and `permission`.
+2. Add YAML front-matter with `description`, `mode`, `model`, `temperature`, and `permission`.
 3. Write the system prompt in the Markdown body.
 4. Start `bash` permissions with `"*": deny` and allowlist only required patterns.
 5. Commit with: `chore: add <name> agent`
