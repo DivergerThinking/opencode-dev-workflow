@@ -19,7 +19,7 @@ node_modules/    # bun-managed; not tracked in git
 Key files:
 - `agents/issue-flow.md` — Primary orchestrator agent for GitHub issue resolution
 - `agents/architect.md` — Read-only architecture analysis subagent
-- `agents/triage.md` — Hidden subagent for structured issue triage reports
+- `agents/triage.md` — Hidden subagent for structured issue triage reports (no tool access)
 - `skills/resolve-issue/SKILL.md` — Full protocol for end-to-end issue resolution
 
 ---
@@ -78,6 +78,8 @@ permission:
 - Always start with `"*": deny` under `bash` and only allowlist what is necessary.
 - Read-only agents (like `architect`) must set `edit: deny`.
 - Agents that create commits/PRs need `git add*`, `git commit*`, `gh pr*`, etc.
+- Agents that manage labels need `gh label*` explicitly allowlisted.
+- Pure-reasoning subagents (like `triage`) that receive all context via prompt should have `bash: {"*": deny}` and no allowlist entries.
 
 ### Mode semantics
 
@@ -146,6 +148,19 @@ When using the `issue-flow` agent or `resolve-issue` skill, the following phases
 | 5     | `git add .`, `git commit`, `gh pr create`, post history comment     | Show PR URL                                              |
 
 **Never skip a phase without explicit user approval.**
+
+### Usage tracking
+
+At the end of each phase, the agent records a `### Usage` block in the history file with:
+
+```markdown
+### Usage
+- **Model:** <model-id>
+- **Input tokens:** <count or "unknown">
+- **Output tokens:** <count or "unknown">
+```
+
+Token counts are read from the opencode UI at the end of each phase. If unavailable, write `unknown` — never fabricate numbers. This allows per-phase cost analysis across a full issue resolution session.
 
 ### PR body template
 
