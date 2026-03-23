@@ -1,5 +1,5 @@
 ---
-description: Resolves GitHub issues end-to-end following a structured phased flow with resume support: detect existing session, load issue, triage and scope, analyze, plan, implement, test, commit, and open a PR.
+description: "Resolves GitHub issues end-to-end following a structured phased flow with resume support: detect existing session, load issue, triage and scope, analyze, plan, implement, test, commit, and open a PR."
 mode: primary
 model: github-copilot/claude-opus-4-6
 temperature: 0.3
