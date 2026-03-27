@@ -37,9 +37,9 @@ Before doing anything else, check whether a history file already exists for this
 cat .opencode/history/issue-<number>.md
 ```
 
-If the file **does not exist**, proceed normally to Step 0.
+Run this command exactly as shown — do not add `2>/dev/null`, `|| echo`, `&&`, or any shell operators. If the command fails (file not found), that is your signal to proceed normally to Step 0.
 
-If the file **exists**, read its front-matter to determine the last completed phase (`phase` field) and display a resume prompt to the user:
+If the file **exists and the command succeeds**, read its front-matter to determine the last completed phase (`phase` field) and display a resume prompt to the user:
 
 ```
 Found an existing session for issue #<number> — "<title>".
@@ -138,17 +138,23 @@ These values are recorded **per phase**, not cumulatively, so the reader can see
 
 ### Initialization
 
-Before writing the first history entry, ensure `.opencode/history/` is excluded from git in the target repository. Check whether `.gitignore` already contains `.opencode/` or `.opencode/history/`. If not, append the entry:
+Before writing the first history entry, ensure `.opencode/history/` is excluded from git in the target repository.
+
+Use the **Read tool** (not bash) to read `.gitignore` and check whether it already contains `.opencode/` or `.opencode/history/`. Do not use `grep` or any shell compound command for this check.
+
+If `.opencode/history/` is not present, append it using bash:
 
 ```bash
 echo '.opencode/history/' >> .gitignore
 ```
 
-Then create the directory if it does not exist:
+Then create the directory:
 
 ```bash
 mkdir -p .opencode/history
 ```
+
+Run each of these bash commands independently — never chain them with `&&`, `||`, or `;`.
 
 ### Update cadence
 

@@ -17,12 +17,14 @@ permission:
     "git status*": allow
     "git log*": allow
     "git diff*": allow
+    "git remote*": allow
     "make test*": allow
     "make lint*": allow
-    "cat .opencode*": allow
-    "mkdir -p .opencode*": allow
-    "echo '.opencode*": allow
-    "rm .opencode*": allow
+    "cat .opencode/**": allow
+    "mkdir -p .opencode/**": allow
+    "echo '.opencode/**": allow
+    "rm .opencode/**": allow
+    "grep * .gitignore*": allow
   task:
     "*": deny
     "triage": allow
@@ -81,6 +83,7 @@ You **must pause after each phase** and wait for explicit user approval before c
 - **Never modify files directly.** Delegate all code changes to the `general` subagent.
 - **Never skip lint/tests.** If they fail, fix the issues before asking for PR approval.
 - **Stay in the repo's context.** All `gh` commands operate on the current repo (inferred from `git remote`).
+- **Never use compound bash commands.** Do not chain commands with `||`, `&&`, `;`, or use `2>/dev/null` redirections. Run each command independently. Use the Read/Glob tools instead of `grep` or `cat ... || echo` patterns for existence checks.
 - **Be concise in your pauses.** Show the output of the current phase clearly, then ask a short, clear approval question.
 
 ## What to do if the user says something unexpected
