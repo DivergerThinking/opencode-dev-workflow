@@ -24,12 +24,25 @@ Key files:
 
 ---
 
+## Activation
+
+To use this config globally across any project:
+
+```bash
+export OPENCODE_CONFIG_DIR="$HOME/Source/opencode-dev-workflow"
+```
+
+OpenCode will pick up agents and skills from this directory for any project.
+
+---
+
 ## Package Manager
 
 This repo uses **bun**. The only direct dependency is `@opencode-ai/plugin`.
 
 ```bash
 bun install     # Install/update dependencies
+npm pack        # Package for distribution
 ```
 
 `package.json` and `bun.lock` are listed in `.gitignore` and not tracked in git.
@@ -127,8 +140,8 @@ The file is always named `SKILL.md` (uppercase).
 | Agent files         | `lowercase-kebab-case.md`                           | `issue-flow.md`, `architect.md`             |
 | Skill directories   | `lowercase-kebab-case/`                             | `resolve-issue/`                            |
 | Skill file          | `SKILL.md` (uppercase)                              | `skills/resolve-issue/SKILL.md`             |
-| Git branches        | `issue-<number>-<slug>` (≤ 60 chars total)          | `issue-42-add-pagination-to-items-endpoint` |
-| Commit messages     | Conventional Commits: `<type>: resolves #<n> - <title>` | `feat: resolves #42 - Add pagination`   |
+| Git branches        | From `branch_format` in `.opencode/settings.json`; fallback `issue-<number>-<slug>` (mode:issue) or `task-<slug>` (mode:text) | `feature/TD-42-add-pagination` |
+| Commit messages     | From `commit_format` in `.opencode/settings.json`; fallback Conventional Commits `<type>: resolves #<n> - <title>` (issue) or `<type>: <title>` (text) | `feat: resolves #42 - Add pagination` |
 | PR titles           | Same as commit message                              | —                                           |
 
 ### Conventional Commit types
@@ -146,17 +159,26 @@ The file is always named `SKILL.md` (uppercase).
 
 ## Workflow Conventions (resolve-issue skill)
 
-When using the `issue-flow` agent or `resolve-issue` skill, the following phases apply:
+The `issue-flow` agent supports two **input modes**:
 
-| Phase | Action                                                              | Pause point                                              |
-|-------|---------------------------------------------------------------------|----------------------------------------------------------|
-| -1    | Check for existing history file (resume detection)                  | "Resume from Phase N, or start over?"                    |
-| 0     | Fetch issue with `gh issue view`; assign `@me`                      | "Shall I proceed with triage?"                           |
-| 1     | Triage: classify type (label), analyse requirements, scope, impact  | "Does the scope and impact look correct?"                |
-| 2     | Invoke `architect` subagent for a plan                              | "Does the plan look good?"                               |
-| 3     | Create branch + invoke `general` subagent                           | "Shall I proceed to run tests?"                          |
-| 4     | Run `make lint` then `make test`                                    | "Shall I commit and open a PR?"                          |
-| 5     | `git add .`, `git commit`, `gh pr create`, post history comment     | Show PR URL                                              |
+| Mode | Specification source | GitHub integration |
+|------|----------------------|--------------------|
+| `issue` | GitHub issue (URL or `#number`) | Full: labels, comments, assignment, `Closes #<number>` |
+| `text` | Description written/pasted by the user | None — only local history file |
+
+The mode is chosen by the user at Phase 0 and carried through all phases. Steps marked **[mode: issue only]** are skipped in `text` mode.
+
+### Phases
+
+| Phase | Action                                                                                                     | GitHub update (issue mode only)          | Pause point                                              |
+|-------|------------------------------------------------------------------------------------------------------------|------------------------------------------|----------------------------------------------------------|
+| -1    | Check for existing history file (resume detection)                                                         | —                                        | "Resume from Phase N, or start over?"                    |
+| 0     | Ask mode (issue/text); load spec; sync with main; check AGENTS.md; load/build project settings; confirm base branch | Assign `@me` + post start comment | "Shall I proceed with triage?"                           |
+| 1     | Triage: classify type, analyse requirements, scope, impact                                                 | Apply labels + post triage comment       | "Does the scope and impact look correct?"                |
+| 2     | Invoke `architect` subagent; publish full plan                                                             | Post full architect analysis as comment  | "Does the plan look good?"                               |
+| 3     | Propose branch name (confirm with user; ask for `{issue}` replacement if mode:text); create branch; invoke `general`; run build | Post files-changed + build result | "Shall I proceed to run tests?"                |
+| 4     | Detect lint/test commands (settings → Makefile → README → ask); run lint then tests; fix errors            | Post results comment                     | "Shall I commit and open a PR?"                          |
+| 5     | Propose commit message (confirm with user); `git add`, `git commit`, `gh pr create` (with `Closes` only if issue mode); post history comment | Post PR link comment | Show PR URL                            |
 
 **Never skip a phase without explicit user approval.**
 
@@ -183,11 +205,30 @@ Token counts are read from the opencode UI at the end of each phase. If unavaila
 <list of key files changed>
 
 ## Testing
-- [ ] `make lint` passes
-- [ ] `make test` passes
+- [ ] Lint passes
+- [ ] Tests pass
 
 Closes #<number>
 ```
+
+### Project settings
+
+Each target repository can have a `.opencode/settings.json` file that persists project-specific configuration across sessions:
+
+```json
+{
+  "base_branch": "main",
+  "branch_format": "feature/TD-{issue}-{slug}",
+  "commit_format": "feat: resolves #{issue} - {title}",
+  "build_command": "make build",
+  "lint_command": "make lint",
+  "test_command": "make test"
+}
+```
+
+The `issue-flow` agent loads this file at Phase 0, infers missing values from `CONTRIBUTING.md`, `README.md`, and `AGENTS.md`, confirms with the user, and persists any updates. This avoids repeating the same questions across sessions.
+
+`settings.json` is excluded from git via `.gitignore` — it is local to each developer's environment.
 
 ---
 
