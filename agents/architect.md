@@ -1,5 +1,5 @@
 ---
-description: Reviews architecture, proposes design decisions, and plans technical changes without modifying code
+description: "Reviews architecture, proposes design decisions, and plans technical changes without modifying code"
 mode: subagent
 model: github-copilot/gpt-5.4
 temperature: 0.2

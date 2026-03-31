@@ -1,5 +1,5 @@
 ---
-description: Analyses a GitHub issue and produces a structured triage report — classification, requirements, scope, impact, and acceptance criteria. Read-only; does not modify files or apply labels.
+description: "Analyses a GitHub issue and produces a structured triage report — classification, requirements, scope, impact, and acceptance criteria. Read-only; does not modify files or apply labels."
 mode: subagent
 model: github-copilot/claude-haiku-4-5
 temperature: 0.2
